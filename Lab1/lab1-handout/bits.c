@@ -171,7 +171,7 @@ NOTES:
  *   Rating: 1
  */
 int lsbZero(int x) {
-  return (x>>1)<<1;
+  return x&((-1)<<1);
 }
 /* 
  * byteNot - bit-inversion to byte n from word x  
@@ -182,7 +182,7 @@ int lsbZero(int x) {
  *   Rating: 2
  */
 int byteNot(int x, int n) {
-  return x^(1<<n);
+  return !!(x^(0xFF<<(n<<3)));
 }
 /* 
  *   byteXor - compare the nth byte of x and y, if it is same, return 0, if not, return 1
@@ -195,7 +195,7 @@ int byteNot(int x, int n) {
  *   Rating: 2 
  */
 int byteXor(int x, int y, int n) {
-  return 2;
+  return !!(x^y)&(0xFF<<(n<<3));
 }
 /* 
  *   logicalAnd - x && y
@@ -204,7 +204,7 @@ int byteXor(int x, int y, int n) {
  *   Rating: 3 
  */
 int logicalAnd(int x, int y) {
-  return 2;
+  return (!!x)&(!!y);
 }
 /* 
  *   logicalOr - x || y
@@ -213,7 +213,7 @@ int logicalAnd(int x, int y) {
  *   Rating: 3 
  */
 int logicalOr(int x, int y) {
-  return 2;
+  return (!!x)|(!!y);
 }
 /* 
  * rotateLeft - Rotate x to the left by n
