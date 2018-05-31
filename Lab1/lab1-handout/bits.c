@@ -234,7 +234,12 @@ int rotateLeft(int x, int n) {
  *   Rating: 4
  */
 int parityCheck(int x) {
-  return 2;
+  x ^= x >> 16;
+  x ^= x >> 8;
+  x ^= x >> 4;
+  x ^= x >> 2;
+  x ^= x >> 1;
+  return x & 1;
 }
 /*
  * mul2OK - Determine if can compute 2*x without overflow
@@ -246,7 +251,8 @@ int parityCheck(int x) {
  *   Rating: 2
  */
 int mul2OK(int x) {
-  return 2;
+  // 最高两位相同即可，不会溢出
+  return (x>>31)^(x>>30);;
 }
 /*
  * mult3div2 - multiplies by 3/2 rounding toward 0,
@@ -260,7 +266,11 @@ int mul2OK(int x) {
  *   Rating: 2
  */
 int mult3div2(int x) {
-  return 2;
+  // 计算3 * x
+  x += x << 1;
+  // 如果是负数需要加一保证取向0
+  x += (x>>31)&1;
+  return x >> 1;
 }
 /* 
  * subOK - Determine if can compute x-y without overflow
