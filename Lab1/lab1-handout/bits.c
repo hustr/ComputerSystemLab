@@ -171,7 +171,7 @@ NOTES:
  *   Rating: 1
  */
 int lsbZero(int x) {
-  return x&((-1)<<1);
+  return (x>>1)<<1;
 }
 /* 
  * byteNot - bit-inversion to byte n from word x  
@@ -182,7 +182,7 @@ int lsbZero(int x) {
  *   Rating: 2
  */
 int byteNot(int x, int n) {
-  return !!(x^(0xFF<<(n<<3)));
+  return x^(0xFF<<(n<<3));
 }
 /* 
  *   byteXor - compare the nth byte of x and y, if it is same, return 0, if not, return 1
@@ -195,7 +195,7 @@ int byteNot(int x, int n) {
  *   Rating: 2 
  */
 int byteXor(int x, int y, int n) {
-  return !!(x^y)&(0xFF<<(n<<3));
+  return !!((x^y)&(0xFF<<(n<<3)));
 }
 /* 
  *   logicalAnd - x && y
@@ -224,7 +224,7 @@ int logicalOr(int x, int y) {
  *   Rating: 3 
  */
 int rotateLeft(int x, int n) {
-  return 2;
+  return (x<<n)|((x>>(32+ ~n + 1))&~(~0<<n));
 }
 /*
  * parityCheck - returns 1 if x contains an odd number of 1's
@@ -252,7 +252,7 @@ int parityCheck(int x) {
  */
 int mul2OK(int x) {
   // 最高两位相同即可，不会溢出
-  return (x>>31)^(x>>30);;
+  return (x>>31)^(x>>30)^1;;
 }
 /*
  * mult3div2 - multiplies by 3/2 rounding toward 0,
@@ -292,7 +292,7 @@ int subOK(int x, int y) {
  *   Rating: 4
  */
 int absVal(int x) {
-  return 2;
+    return (x^(x>>31)) + ((x>>31)&1);
 }
 /* 
  * float_abs - Return bit-level equivalent of absolute value of f for
@@ -306,7 +306,10 @@ int absVal(int x) {
  *   Rating: 2
  */
 unsigned float_abs(unsigned uf) {
-  return 2;
+    if (!(uf^((-1)<<31))) {
+        return 0;
+    }
+    return uf&((~0)>>1);
 }
 /* 
  * float_f2i - Return bit-level equivalent of expression (int) f
