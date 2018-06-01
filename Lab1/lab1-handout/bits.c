@@ -268,7 +268,7 @@ int mul2OK(int x) {
 int mult3div2(int x) {
   // 计算3 * x
   x += x << 1;
-  // 如果是负数需要加一保证取向0
+  // 如果是负数需要加1, 2^(n) - 1
   x += (x>>31)&1;
   return x >> 1;
 }
@@ -281,7 +281,10 @@ int mult3div2(int x) {
  *   Rating: 3
  */
 int subOK(int x, int y) {
-  return 0;
+    // same sign, no problem
+    // not same sign, check if the sign is changed after operation
+    return !!((!((x>>31)^(y>>31)))|(!((x>>31)^((x + ~y + 1)>>31))));
+
 }
 /* 
  * absVal - absolute value of x
@@ -324,5 +327,20 @@ unsigned float_abs(unsigned uf) {
  *   Rating: 4
  */
 int float_f2i(unsigned uf) {
-  return 2;
+    if (!((uf^0x7fc00000)&&(uf^0xffc00000))) {
+        return 0x80000000;
+    }
+    int s = (uf>>31)&1;
+    int m = (uf&0x7FFFFF)|(1<<23);
+    int e = ((uf>>23)&0xFF)- 127;
+    if (e < 0) {
+        return 0;
+    } else if(e > 31) {
+        return 0x80000000;
+    }else if (e < 23) {
+        m >>= 23 - e;
+    } else {
+        m <<= e - 23;
+    }
+    return s ? -m : m;
 }
