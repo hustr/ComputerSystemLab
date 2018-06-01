@@ -281,7 +281,7 @@ int mult3div2(int x) {
  *   Rating: 3
  */
 int subOK(int x, int y) {
-  return 2;
+  return 0;
 }
 /* 
  * absVal - absolute value of x
@@ -306,10 +306,10 @@ int absVal(int x) {
  *   Rating: 2
  */
 unsigned float_abs(unsigned uf) {
-    if (!(uf^((-1)<<31))) {
-        return 0;
+    if (!((uf^0x7FC00000)&(uf^0xFFC00000))) {
+        return uf;
     }
-    return uf&((~0)>>1);
+    return uf&0x7FFFFFFF;
 }
 /* 
  * float_f2i - Return bit-level equivalent of expression (int) f
