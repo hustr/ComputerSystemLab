@@ -283,7 +283,7 @@ int mult3div2(int x) {
 int subOK(int x, int y) {
     // same sign, no problem
     // not same sign, check if the sign is changed after operation
-    return !!((!((x>>31)^(y>>31)))|(!((x>>31)^((x + ~y + 1)>>31))));
+    return !(((x>>31)^(y>>31))&((x>>31)^((x + ~y + 1)>>31)));
 
 }
 /* 
