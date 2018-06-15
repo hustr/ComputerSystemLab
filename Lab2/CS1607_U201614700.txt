@@ -1,0 +1,8 @@
+Verbosity leads to unclear, inarticulate things.
+1 2 4 8 16 32
+0 1096
+8 35
+666666
+3 5 4 2 6 1
+
+987 791 502 621 589 823
