@@ -4,5 +4,3 @@ Verbosity leads to unclear, inarticulate things.
 8 35
 666666
 3 5 4 2 6 1
-
-987 791 502 621 589 823

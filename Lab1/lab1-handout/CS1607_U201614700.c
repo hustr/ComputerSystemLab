@@ -327,12 +327,15 @@ unsigned float_abs(unsigned uf) {
  *   Rating: 4
  */
 int float_f2i(unsigned uf) {
+    int s;
+    int m;
+    int e;
     if (!((uf^0x7fc00000)&&(uf^0xffc00000))) {
         return 0x80000000;
     }
-    int s = (uf>>31)&1;
-    int m = (uf&0x7FFFFF)|(1<<23);
-    int e = ((uf>>23)&0xFF)- 127;
+    s = (uf>>31)&1;
+    m = (uf&0x7FFFFF)|(1<<23);
+    e = ((uf>>23)&0xFF)- 127;
     if (e < 0) {
         return 0;
     } else if(e > 31) {
