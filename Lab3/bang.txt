@@ -1,5 +1,5 @@
 
-asm.o:     file format elf32-i386
+bang.o:     file format elf32-i386
 
 
 Disassembly of section .text:
