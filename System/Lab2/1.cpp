@@ -59,12 +59,18 @@ int main() {
     pthread_t pid_compute, pid_print;
     // 创建计算线程
     pthread_create(&pid_compute, nullptr, [](void *) -> void * {
-        while (a < END) {
+        while (true) {
             // 请求空缓冲区
             P(sem_id, EMPTY);
-            ++a;
-            // 标记数据为有效
-            V(sem_id, VALID);
+            if (a < END) {
+                ++a;
+                // 标记数据为有效
+                V(sem_id, VALID);
+            } else {
+                // 数据有效还是无效呢？
+                V(sem_id, VALID);
+                break;
+            }
         }
         return nullptr;
     }, nullptr);
@@ -74,12 +80,18 @@ int main() {
     }
     // 创建打印线程
     pthread_create(&pid_print, nullptr, [](void *) -> void * {
-        while (a < END) {
+        while (true) {
             // 请求有效数据
             P(sem_id, VALID);
-            std::cout << "print a: " << a << "\n";
-            // 给出空缓冲区
-            V(sem_id, EMPTY);
+            if (a <= END) {
+                std::cout << "print a: " << a << "\n";
+                // 给出空缓冲区
+                V(sem_id, EMPTY);
+            } else {
+                // 虽然没啥意义，但还是释放一下吧
+                V(sem_id, EMPTY);
+                break;
+            }
         }
         return nullptr;
     }, nullptr);
@@ -98,4 +110,3 @@ int main() {
 
     return 0;
 }
-
