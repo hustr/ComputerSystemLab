@@ -3,6 +3,7 @@
 #include <signal.h>
 #include <sys/wait.h>
 #include <thread>
+#include <cerrno>
 
 #define BSIZE 200
 
@@ -17,11 +18,11 @@ typedef void(*func)(int);
 int main() {
     // 创建管道
     if (pipe(pfields) != 0) {
-        std::cout << "Create pipe failed\n";
+        std::cout << "create pipe failed, errno: " << errno << "\n";
         exit(EXIT_FAILURE);
     }
     // 缓冲区
-    char buff[BSIZE];
+    char buff[BSIZE]{};
     int nbytes;
     // 创建第一个子进程
     if ((cpids[0] = fork()) == 0) {
