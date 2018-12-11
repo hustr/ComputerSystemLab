@@ -39,17 +39,13 @@ int main() {
             exit(EXIT_SUCCESS);
         });
         int times = 1;
-        // 这个类型定义是真的长
-        // std::chrono::time_point<std::chrono::steady_clock, std::chrono::nanoseconds>
-        auto time_pnt = std::chrono::steady_clock::now();
         while (true) {
-            // sleep到时间点
-            std::this_thread::sleep_until(time_pnt);
-            time_pnt += std::chrono::seconds(1);
             nbytes = sprintf(buff, "I send you %d times.", times);
             times++;
             // 发送数据到管道
             write(pfields[1], buff, nbytes);
+            // 睡眠一秒
+            std::this_thread::sleep_for(std::chrono::seconds(1));
         }
     } else if ((cpids[1] = fork()) == 0) {
         // 子进程2
