@@ -16,10 +16,10 @@ int main(int argc, char *argv[]) {
     int sem = semget(SEM_ID, SEM_CNT, 0666);
     std::cout << "get sem: " << sem << std::endl;
     while (true) {
-        P(sem, VALID);
         // 写入文件
         std::cout << "get: " << block_idx << std::endl;
         auto &blk = blocks[block_idx];
+        P(sem, VALID);
         file.write(blk.data, blk.size);
         V(sem, EMPTY);
         // 判断是否结束

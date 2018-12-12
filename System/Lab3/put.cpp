@@ -22,25 +22,24 @@ int main(int argc, char *argv[]) {
     int block_idx = 0;
     char buf[BUFSIZE];
     while (true) {
-        P(sem, EMPTY);
         auto &blk = blocks[block_idx];
         // 写入文件
         // 判断是否够读一个块
         // std::cout << "put: " << size << " " << file.tellg() << std::endl;
+        P(sem, EMPTY);
         if (size - file.tellg() > BUFSIZE) {
             file.read(blk.data, BUFSIZE);
             blk.end = false;
             blk.size = BUFSIZE;
-            std::cout << "put: " << block_idx << std::endl;
             V(sem, VALID);
+            std::cout << "put: " << block_idx << std::endl;
         } else {
-            int put_bytes = size - file.tellg();
-            file.read(blk.data, put_bytes);
+            blk.size = size - file.tellg();
+            file.read(blk.data, blk.size);
             blk.end = true;
-            blk.size = put_bytes;
-            std::cout << "put: " <<block_idx << std::endl;
             // 写入结束
             V(sem, VALID);
+            std::cout << "put: " <<block_idx << std::endl;
             break;
         }
         block_idx = (block_idx + 1) % BUFCNT;
