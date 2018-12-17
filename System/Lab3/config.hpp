@@ -6,6 +6,9 @@
 #include <sys/shm.h>
 #include <sys/sem.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
+#include <cstring>
+#include <fcntl.h>
 #include <unistd.h>
 #include <iostream>
 #include <memory>

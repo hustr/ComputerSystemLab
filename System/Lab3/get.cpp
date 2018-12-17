@@ -1,13 +1,17 @@
 #include "config.hpp"
 
 int main(int argc, char *argv[]) {
-    assert(argc == 1);
+    char name[256];
+    std::memcpy(name, argv[0], strlen(argv[0]));
+    struct stat statbuf;
+    stat(argv[0], &statbuf);
+    strcat(name, ".cpy");
     // get创建一个copy文件
-    std::string filename(argv[0]);
-    filename.append(".cpy");
-    // 获取信号灯，如何判断结束是个问题
-    // 二进制写入
-    std::ofstream file(filename, std::ios_base::binary | std::ios_base::out);
+    int fd = open(name, O_WRONLY | O_CREAT, statbuf.st_mode);
+    if (fd < 0 ) {
+        std::cerr << "open " << argv[0] << " failed, errno: " << errno << std::endl;
+        exit(EXIT_FAILURE);
+    }
     // 获取虚拟内存
     int shm = shmget(SHM_ID, BUFCNT * sizeof(Block), 0666);
     Block *blocks = static_cast<Block*>(shmat(shm, nullptr, 0));
@@ -20,7 +24,8 @@ int main(int argc, char *argv[]) {
         std::cout << "get: " << block_idx << std::endl;
         auto &blk = blocks[block_idx];
         P(sem, VALID);
-        file.write(blk.data, blk.size);
+        // file.write(blk.data, blk.size);
+        write(fd, blk.data, blk.size);
         V(sem, EMPTY);
         // 判断是否结束
         if (blk.end) {
