@@ -15,7 +15,7 @@ int sem_id = 0;
 /* arg for semctl system calls. */
 union semun {
     int val;            /* value for SETVAL */
-    struct semid_ds *buf;    /* buffer for IPC_STAT & IPC_SET */
+    semid_ds *buf;    /* buffer for IPC_STAT & IPC_SET */
     unsigned short *array;    /* array for GETALL & SETALL */
 };
 

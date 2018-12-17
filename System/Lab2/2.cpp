@@ -19,7 +19,7 @@ int sem_id = 0;
 /* arg for semctl system calls. */
 union semun {
     int val;            /* value for SETVAL */
-    struct semid_ds *buf;    /* buffer for IPC_STAT & IPC_SET */
+    semid_ds *buf;    /* buffer for IPC_STAT & IPC_SET */
     unsigned short *array;    /* array for GETALL & SETALL */
 };
 
@@ -82,13 +82,13 @@ int main() {
             // 线程结束
             return nullptr;
         }, &num);
-        //  等待线程将num指向的内存取走
-        while (num) {
-            std::this_thread::yield();
-        }
         if (pid_sell[i] < 0) {
             std::cerr << "create thread failed, errno: " << errno << "\n";
             exit(EXIT_FAILURE);
+        }
+        //  等待线程将num指向的内存取走
+        while (num) {
+            std::this_thread::yield();
         }
     }
 
