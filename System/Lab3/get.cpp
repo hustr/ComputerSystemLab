@@ -1,13 +1,12 @@
 #include "config.hpp"
 
 int main(int argc, char *argv[]) {
-    char name[256];
-    std::memcpy(name, argv[0], strlen(argv[0]));
+    std::string name = argv[0];
+    name += ".cpy";
     struct stat statbuf;
     stat(argv[0], &statbuf);
-    strcat(name, ".cpy");
     // get创建一个copy文件
-    int fd = open(name, O_WRONLY | O_CREAT, statbuf.st_mode);
+    int fd = open(name.c_str(), O_WRONLY | O_CREAT, statbuf.st_mode);
     if (fd < 0 ) {
         std::cerr << "open " << argv[0] << " failed, errno: " << errno << std::endl;
         exit(EXIT_FAILURE);
