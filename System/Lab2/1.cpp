@@ -59,15 +59,11 @@ int main() {
     pthread_t pid_compute, pid_print;
     // 创建计算线程
     pthread_create(&pid_compute, nullptr, [](void *) -> void * {
-        while (true) {
-            // 请求空缓冲区
+        for (int i = 1; i <= 100; ++i) {
             P(sem_id, EMPTY);
-            ++a;
-            V(sem_id, VALID);
+            a += i;
             std::cout << "calculate a = " << a << std::endl;
-            if (a >= END) {
-                break;
-            }
+            V(sem_id, VALID);
         }
         return nullptr;
     }, nullptr);
@@ -77,15 +73,10 @@ int main() {
     }
     // 创建打印线程
     pthread_create(&pid_print, nullptr, [](void *) -> void * {
-        while (true) {
-            // 请求有效数据
+        for (int i = 0; i < 100; ++i) {
             P(sem_id, VALID);
-            std::cout << "print a = " << a << "\n";            
-            // 释放缓冲区
+            std::cout << "print a = " << a << std::endl;
             V(sem_id, EMPTY);
-            if (a >= END) {
-                break;
-            }
         }
         return nullptr;
     }, nullptr);

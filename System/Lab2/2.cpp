@@ -61,20 +61,21 @@ int main() {
         std::unique_ptr<int> num = std::make_unique<int>(i);
         // 创建线程
         pthread_create(pid_sell + i, nullptr, [](void *num) -> void * {
+            int sum = 0;
             // 移动构造pid
             auto pid = std::move(*static_cast<std::unique_ptr<int> *>(num));
             while (true) {
-                // 请求有效数据
                 P(sem_id, 0);
                 // 已销售0，此线程应该销售1
                 if (selled < END) {
+                    ++sum;
                     ++selled;
                     std::cout << *pid << " sells " << selled << "\n";
                     V(sem_id, 0);
-                    // 随机睡眠
                     std::this_thread::sleep_for(std::chrono::milliseconds(random() % 100));
                 } else {
-                    // 结束循环
+                    // 输出所有票数
+                    std::cout << "thread " << *pid << " selled " << sum << " ticket(s) in total.\n";
                     V(sem_id, 0);
                     break;
                 }
