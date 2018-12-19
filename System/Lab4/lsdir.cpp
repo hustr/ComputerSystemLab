@@ -83,7 +83,7 @@ void print_info(const std::string &path) {
     }
 }
 
-void printdir(const std::string &dirpath, int depth = 0) {
+void lsdir(const std::string &dirpath, int depth = 0) {
     const static std::string cur = ".", pre = "..";
 
     DIR *dir = opendir(dirpath.c_str());
@@ -94,7 +94,7 @@ void printdir(const std::string &dirpath, int depth = 0) {
     };
     if (dir == nullptr) {
         std::cerr << "error open dir, errno: " << errno << std::endl;
-        exit(EXIT_FAILURE);
+        return;
     }
     // 确保dir最后一定会被关闭
     std::unique_ptr<DIR, decltype(del_dir)> dir_guard(dir, del_dir);
@@ -116,7 +116,7 @@ void printdir(const std::string &dirpath, int depth = 0) {
         print_info(filename + ent->d_name);
         std::cout << std::endl;
         if (ent->d_type == DT_DIR) {
-            printdir(filename + ent->d_name, depth + 4);
+            lsdir(filename + ent->d_name, depth + 4);
         }
     }
 }
@@ -125,10 +125,10 @@ void printdir(const std::string &dirpath, int depth = 0) {
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         for (int i = 1; i < argc; ++i) {
-            printdir(argv[i]);
+            lsdir(argv[i]);
         }
     } else {
-        printdir(".");
+        lsdir(".");
     }
 
 
