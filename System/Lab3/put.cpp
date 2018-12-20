@@ -5,11 +5,16 @@ int main(int argc, char *argv[]) {
      int fd = open(argv[0], O_RDONLY);
      if (fd < 0) {
          std::cerr << "open " << argv[0] << "failed, errno: " << errno << std::endl;
-         exit(EXIT_FAILURE);
+         return EXIT_FAILURE;
      }
     // 获取虚拟内存块
-    int shm = shmget(SHM_ID, BUFCNT * sizeof(Block), 0666);
-    Block *blocks = static_cast<Block*>(shmat(shm, nullptr, 0));
+    Block *blocks[SHM_END - SHM_BEG];
+    std::vector<shm_dt_ctl> del_shms;
+    for (int i = SHM_BEG; i < SHM_END; ++i) {
+        int shm = shmget(i, sizeof(Block), 0666);
+        blocks[i - SHM_BEG] = static_cast<Block*>(shmat(shm, nullptr, 0));
+        del_shms.push_back(shm_dt_ctl(blocks[i - SHM_BEG]));
+    }
     // 获取信号灯
     int sem = semget(SEM_ID, SEM_CNT, 0666);
     std::cout << "put sem: " << sem << std::endl;
@@ -17,7 +22,7 @@ int main(int argc, char *argv[]) {
     int block_idx = 0;
     char buf[BUFSIZE];
     while (true) {
-        auto &blk = blocks[block_idx];
+        auto &blk = *blocks[block_idx];
         // 写入文件
         P(sem, EMPTY);
         int bytes = read(fd, blk.data, BUFSIZE);
@@ -33,8 +38,6 @@ int main(int argc, char *argv[]) {
         }
     }
     std::cout << "put end" << std::endl;
-    // 关闭虚拟内存关联
-    shmdt(blocks);
     // 关闭文件描述符
     close(fd);
     // 结束写入程序

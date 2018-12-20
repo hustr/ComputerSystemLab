@@ -5,28 +5,31 @@ int main(int argc, char *argv[]) {
         std::cerr << "please use like: main \"filename\"" << std::endl;
         exit(EXIT_FAILURE);
     }
+    std::vector<shm_del_ctl> shms;
     // 创建缓冲区
-    int shm = shmget(SHM_ID, BUFCNT * sizeof(Block), IPC_CREAT | 0666);
-    if (shm < 0) {
-        std::cerr << "create shared memory failed, errno: " << errno << std::endl;
-        exit(EXIT_FAILURE);
-    } else {
-        std::cout << "create shared memory success" << std::endl;
+    for (int i = SHM_BEG; i < SHM_END; ++i) {
+        int shm = shmget(i, sizeof(Block), IPC_CREAT | 0666);
+        if (shm < 0) {
+            std::cerr << "create shared memory failed, errno: " << errno << std::endl;
+            return EXIT_FAILURE;
+        }
+        shms.push_back(shm_del_ctl(new int(shm)));
     }
     // 创建信号量
     int sem = semget(SEM_ID, SEM_CNT, IPC_CREAT | 0666);
     if (sem < 0) {
         std::cerr << "create semaphores failed, errno: " << errno << std::endl;
-        exit(EXIT_FAILURE);
+        return EXIT_FAILURE;
     } else {
         std::cout << "create semphore success" << std::endl;
     }
+    sem_del_ctl sem_del(new int(sem));
     // 初始化信号量
     semun arg;
     arg.val = 0;
-    std::cout << semctl(sem, VALID, SETVAL, arg) << std::endl;
+    semctl(sem, VALID, SETVAL, arg);
     arg.val = BUFCNT;
-    std::cout << semctl(sem, EMPTY, SETVAL, arg) << std::endl;
+    semctl(sem, EMPTY, SETVAL, arg);
     // 创建两个子进程
     pid_t pids[2];
     // 传一个参数即文件名即可
@@ -41,17 +44,6 @@ int main(int argc, char *argv[]) {
     // 等待结束
     waitpid(pids[0], nullptr, 0);
     waitpid(pids[1], nullptr, 0);
-    if(shmctl(shm, 0, IPC_RMID) < 0) {
-        std::cerr << "destroy shared memory failed, errno: " << errno << std::endl;
-    } else {
-        std::cout << "destroy shared memory success" << std::endl;
-    }
-    if (semctl(sem, 0, IPC_RMID) < 0) {
-        std::cerr << "destroy semphore failed, errno: " << errno << std::endl;
-    } else {
-        std::cout << "destroy semphore success" << std::endl;
-    }
-
     // 执行到return时自动调用unique_ptr的析构函数，释放控制量
     return 0;
 }

@@ -15,7 +15,9 @@
 #include <utility>
 #include <cerrno>
 #include <cassert>
-#include <fstream>
+#include <vector>
+#include <thread>
+#include <chrono>
 
 // 缓冲区个数100个
 #define BUFCNT 100
@@ -23,12 +25,42 @@
 #define BUFSIZE 10
 
 // 缓冲区ID
-const key_t SHM_ID = 100;
+const key_t SHM_BEG = 100;
+const key_t SHM_END = 200;
 // 信号量ID
 const key_t SEM_ID = 101;
 const key_t VALID = 0;
 const key_t EMPTY = 1;
 const size_t SEM_CNT = 2;
+
+
+struct DEL_SHM {
+    void operator()(int *id) {
+        shmctl(*id, IPC_RMID, nullptr);
+        delete id;
+    }
+};
+
+typedef std::unique_ptr<int, DEL_SHM> shm_del_ctl;
+
+struct Block;
+
+struct DT_SHM {
+    void operator()(Block *addr) {
+        shmdt(addr);
+    }
+};
+
+typedef std::unique_ptr<Block, DT_SHM> shm_dt_ctl;
+
+struct DEL_SEM {
+    void operator()(int *id) {
+        semctl(*id, 0, IPC_RMID);
+        delete id;
+    }
+};
+
+typedef std::unique_ptr<int, DEL_SEM> sem_del_ctl;
 
 void P(int semid, int index) {
     sembuf sem;
