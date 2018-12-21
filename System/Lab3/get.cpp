@@ -11,30 +11,27 @@ int main(int argc, char *argv[]) {
         std::cerr << "open " << argv[0] << " failed, errno: " << errno << std::endl;
         return EXIT_FAILURE;
     }
-    Block *blocks[SHM_END - SHM_BEG];
-    std::vector<std::unique_ptr<Block, DT_SHM>> dt_shms;
+    std::vector<ShmCtl> shms;
     for (int i = SHM_BEG; i < SHM_END; ++i) {
         int shm = shmget(i, sizeof(Block), 0666);
-        blocks[i - SHM_BEG] = static_cast<Block*>(shmat(shm, nullptr, 0));
-        dt_shms.push_back(std::unique_ptr<Block, DT_SHM>(blocks[i - SHM_BEG]));
+        shms.emplace_back(shm);
     }
     // 获取信号灯
-    int sem = semget(SEM_ID, SEM_CNT, 0666);
-    std::cout << "get sem: " << sem << std::endl;
-    int block_idx = 0;
+    int valid = semget(SEM_VALID, 1, 0666);
+    int empty = semget(SEM_EMPTY, 1, 0666);
+    int idx = 0;
     while (true) {
         // 写入文件
-        std::cout << "get: " << block_idx << std::endl;
-        auto &blk = *blocks[block_idx];
-        P(sem, VALID);
-        // file.write(blk.data, blk.size);
+        auto &blk = shms[idx].get<Block>();
+        P(valid);
         write(fd, blk.data, blk.size);
-        V(sem, EMPTY);
+        V(empty);
+        std::cout << "get: " << idx << std::endl;
         // 判断是否结束
         if (blk.end) {
             break;
         }
-        block_idx = (block_idx + 1) % BUFCNT;
+        idx = (idx + 1) % BUFCNT;
     }
     std::cout << "get end" << std::endl;
     return 0;

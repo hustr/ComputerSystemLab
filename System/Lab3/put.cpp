@@ -8,30 +8,28 @@ int main(int argc, char *argv[]) {
          return EXIT_FAILURE;
      }
     // 获取虚拟内存块
-    Block *blocks[SHM_END - SHM_BEG];
-    std::vector<shm_dt_ctl> del_shms;
+    std::vector<ShmCtl> shms;
     for (int i = SHM_BEG; i < SHM_END; ++i) {
         int shm = shmget(i, sizeof(Block), 0666);
-        blocks[i - SHM_BEG] = static_cast<Block*>(shmat(shm, nullptr, 0));
-        del_shms.push_back(shm_dt_ctl(blocks[i - SHM_BEG]));
+        shms.emplace_back(shm);
     }
     // 获取信号灯
-    int sem = semget(SEM_ID, SEM_CNT, 0666);
-    std::cout << "put sem: " << sem << std::endl;
+    int valid = semget(SEM_VALID, 1, 0666);
+    int empty = semget(SEM_EMPTY, 1, 0666);
     // 写入文件
-    int block_idx = 0;
+    int idx = 0;
     char buf[BUFSIZE];
     while (true) {
-        auto &blk = *blocks[block_idx];
+        auto &blk = shms[idx].get<Block>();
         // 写入文件
-        P(sem, EMPTY);
+        P(empty);
         int bytes = read(fd, blk.data, BUFSIZE);
         blk.size = bytes;
         // 结束判断
         blk.end = bytes < BUFSIZE;
-        V(sem, VALID);
-        std::cout << "put: " << block_idx << std::endl;
-        block_idx = (block_idx + 1) % BUFCNT;
+        V(valid);
+        std::cout << "put: " << idx << std::endl;
+        idx = (idx + 1) % BUFCNT;
         // 结束就停止读取
         if (blk.end) {
             break;
