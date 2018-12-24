@@ -24,7 +24,7 @@ public:
     // 禁止拷贝和赋值
     ShmBlk(const ShmBlk&) = delete;
     ShmBlk& operator=(const ShmBlk&) = delete;
-    ShmBlk(key_t key); // 构造函数保存key
+    ShmBlk(key_t key); // 构造函数保存此key得到的id
     ShmBlk(ShmBlk &&other);// 移动构造获取其他控制块的资源
     ~ShmBlk(); // 释放资源
 };
