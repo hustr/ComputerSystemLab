@@ -33,6 +33,6 @@ int main(int argc, char *argv[]) {
     }
     // 等待结束
     waitpid(-1, nullptr, 0);
-    // 执行到return时自动调用unique_ptr的析构函数，释放控制量
+    // 执行到return时自动调用每个类的析构函数，释放控制量
     return 0;
 }
