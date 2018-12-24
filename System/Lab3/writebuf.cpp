@@ -11,7 +11,7 @@ int main(int argc, char *argv[]) {
         std::cerr << "open " << argv[0] << " failed, errno: " << errno << std::endl;
         return EXIT_FAILURE;
     }
-    std::vector<ShmCtl> shms;
+    std::vector<ShmCtl<Block>> shms;
     for (int i = SHM_BEG; i < SHM_END; ++i) {
         int shm = shmget(i, sizeof(Block), 0666);
         shms.emplace_back(shm);
@@ -22,17 +22,17 @@ int main(int argc, char *argv[]) {
     int idx = 0;
     while (true) {
         // 写入文件
-        auto &blk = shms[idx].get<Block>();
+        auto &blk = shms[idx].get();
         P(valid);
         write(fd, blk.data, blk.size);
         V(empty);
-        std::cout << "get: " << idx << std::endl;
+        std::cout << "writebuf: " << idx << std::endl;
         // 判断是否结束
         if (blk.end) {
             break;
         }
         idx = (idx + 1) % BUFCNT;
     }
-    std::cout << "get end" << std::endl;
+    std::cout << "writebuf end" << std::endl;
     return 0;
 }

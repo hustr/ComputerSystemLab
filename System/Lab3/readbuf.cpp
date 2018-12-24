@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
          return EXIT_FAILURE;
      }
     // 获取虚拟内存块
-    std::vector<ShmCtl> shms;
+    std::vector<ShmCtl<Block>> shms;
     for (int i = SHM_BEG; i < SHM_END; ++i) {
         int shm = shmget(i, sizeof(Block), 0666);
         shms.emplace_back(shm);
@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
     int idx = 0;
     char buf[BUFSIZE];
     while (true) {
-        auto &blk = shms[idx].get<Block>();
+        auto &blk = shms[idx].get();
         // 写入文件
         P(empty);
         int bytes = read(fd, blk.data, BUFSIZE);
@@ -28,14 +28,14 @@ int main(int argc, char *argv[]) {
         // 结束判断
         blk.end = bytes < BUFSIZE;
         V(valid);
-        std::cout << "put: " << idx << std::endl;
+        std::cout << "readbuf: " << idx << std::endl;
         idx = (idx + 1) % BUFCNT;
         // 结束就停止读取
         if (blk.end) {
             break;
         }
     }
-    std::cout << "put end" << std::endl;
+    std::cout << "readbuf end" << std::endl;
     // 关闭文件描述符
     close(fd);
     // 结束写入程序

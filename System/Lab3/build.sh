@@ -1,9 +1,8 @@
 #!/bin/bash
 g++ main.cpp -o main
 echo "build main finished"
-g++ put.cpp -o put
-echo "build put finished"
-g++ get.cpp -o get
-echo "build get finished"
+g++ readbuf.cpp -o readbuf
+echo "build readbuf finished"
+g++ writebuf.cpp -o writebuf
+echo "build writebuf finished"
 echo "build all"
-

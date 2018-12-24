@@ -63,6 +63,7 @@ union semun {
 // 代码重构，将虚拟共享内存的attach和detach交给类来处理，内存的创建和销毁交给类
 // 信号量的创建和释放交给类控制
 // 内存创建与销毁
+template<typename T>
 class ShmBlk {
 private:
     // 申请到的内存的id
@@ -74,9 +75,9 @@ public:
     ShmBlk(const ShmBlk&) = delete;
     ShmBlk& operator=(const ShmBlk&) = delete;
 
-    ShmBlk(key_t key, size_t size) : pid(getpid()) {
+    ShmBlk(key_t key) : pid(getpid()) {
         // 申请内存
-        id = shmget(key, size, IPC_CREAT | 0666);
+        id = shmget(key, sizeof(T), IPC_CREAT | 0666);
         if (id < 0) {
             std::cerr << "create shared memory failed, errno: " << errno << std::endl;
             return;
@@ -103,9 +104,10 @@ public:
 };
 
 // 内存的attach和detach
+template<typename T>
 class ShmCtl {
 private:
-    void *addr = nullptr;
+    T *addr = nullptr;
 public:
     ShmCtl() = default;
     ShmCtl(const ShmCtl&) = delete;
@@ -114,7 +116,7 @@ public:
     // 通过id来attach内存
     explicit ShmCtl(int id) {
         // 返回值是内存地址,失败返回-1
-        addr = shmat(id, nullptr, 0666);
+        addr = static_cast<Block*>(shmat(id, nullptr, 0666));
         if (size_t(addr) == -1) {
             std::cerr << "attach shared memory failed, errno: " << errno << std::endl;
         }
@@ -126,9 +128,8 @@ public:
         other.addr = nullptr;
     }
 
-    template<typename T>
     T &get() {
-        return *static_cast<T *>(addr);
+        return *addr;
     }
 
     ~ShmCtl() {
