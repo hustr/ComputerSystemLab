@@ -12,25 +12,19 @@
 #include <iomanip>
 #include <chrono>
 #include <ctime>
+#include <stack>
 
-#define NANO 1000000000
-
-static const std::map<const int, const std::string> type_to_string{
-        {DT_BLK,     "block device"},
-        {DT_CHR,     "character device"},
-        {DT_DIR,     "directory"},
-        {DT_FIFO,    "named pipe"},
-        {DT_LNK,     "symbolic link"},
-        {DT_REG,     "regular file"},
-        {DT_SOCK,    "UNIX domain socket"},
-        {DT_UNKNOWN, "UNKNOWN"},
-};
+void print_space(int depth) {
+    if (depth > 0) {
+        std::cout << std::setw(depth) << std::right << ' ';
+    }
+}
 
 void print_info(const std::string &path) {
     // 输出路径对应的文件或目录的详细信息
     struct stat stat_buf{};
     // 打开目录项
-    if(lstat(path.c_str(), &stat_buf) < 0) {
+    if (lstat(path.c_str(), &stat_buf) < 0) {
         std::cerr << "errno: " << errno << std::endl;
         return;
     }
@@ -46,21 +40,21 @@ void print_info(const std::string &path) {
         std::cout << 'b';
     } else if (S_ISLNK(mode)) {
         std::cout << 'l';
-    }  else if (S_ISSOCK(mode)) {
+    } else if (S_ISSOCK(mode)) {
         std::cout << 's';
     }
     // 用户读写执行权限
-    std::cout << ((S_IRUSR & mode ) ? 'r' : '-');
-    std::cout << ((S_IWUSR & mode ) ? 'w' : '-');    
-    std::cout << ((S_IXUSR & mode ) ? 'x' : '-');
-    // 组用户权限    
-    std::cout << ((S_IRGRP & mode ) ? 'r' : '-');
-    std::cout << ((S_IWGRP & mode ) ? 'w' : '-');    
-    std::cout << ((S_IXGRP & mode ) ? 'x' : '-');
+    std::cout << ((S_IRUSR & mode) ? 'r' : '-');
+    std::cout << ((S_IWUSR & mode) ? 'w' : '-');
+    std::cout << ((S_IXUSR & mode) ? 'x' : '-');
+    // 组用户权限
+    std::cout << ((S_IRGRP & mode) ? 'r' : '-');
+    std::cout << ((S_IWGRP & mode) ? 'w' : '-');
+    std::cout << ((S_IXGRP & mode) ? 'x' : '-');
     // 其他用户权限
-    std::cout << ((S_IROTH & mode ) ? 'r' : '-');
-    std::cout << ((S_IWOTH & mode ) ? 'w' : '-');    
-    std::cout << ((S_IXOTH & mode ) ? 'x' : '-');
+    std::cout << ((S_IROTH & mode) ? 'r' : '-');
+    std::cout << ((S_IWOTH & mode) ? 'w' : '-');
+    std::cout << ((S_IXOTH & mode) ? 'x' : '-');
     // 输出文件硬链接数
     std::cout << ' ' << stat_buf.st_nlink << ' ';
     // 输出用户名和组名
@@ -83,7 +77,7 @@ void print_info(const std::string &path) {
     }
 }
 
-void lsdir(const std::string &dirpath, int depth = 0) {
+void lsdir_recursive(const std::string &dirpath, int depth = 0) {
     const static std::string cur = ".", pre = "..";
 
     DIR *dir = opendir(dirpath.c_str());
@@ -110,13 +104,60 @@ void lsdir(const std::string &dirpath, int depth = 0) {
             continue;
         }
         // 空白总是要先输出的
-        for (int i = 0; i < depth; ++i) {
-            std::cout << ' ';
-        }
+        print_space(depth);
         print_info(filename + ent->d_name);
         std::cout << std::endl;
         if (ent->d_type == DT_DIR) {
-            lsdir(filename + ent->d_name, depth + 4);
+            lsdir_recursive(filename + ent->d_name, depth + 4);
+        }
+    }
+}
+
+
+void lsdir_non_recursive(const std::string &dirpath) {
+    const static std::string cur = ".", pre = "..";
+    std::stack<std::pair<std::string, int>> dirs;
+    dirs.push(std::make_pair(dirpath, 0));
+    auto del_dir = [&](DIR *dir) {
+        closedir(dir);
+    };
+    while (!dirs.empty()) {
+        auto curpair = std::move(dirs.top());
+        dirs.pop();
+        std::string &curdirpath = curpair.first;
+        if (curdirpath != ".") {
+            print_space(curpair.second - 4);
+            print_info(curdirpath);
+            std::cout << std::endl;
+        }
+
+        if (curdirpath.back() != '/') {
+            curdirpath.push_back('/');
+        }
+
+        DIR *dir = opendir(curdirpath.c_str());
+        if (dir == nullptr) {
+            std::cerr << "error open dir, errno: " << errno << std::endl;
+            return;
+        }
+        // 确保dir最后一定会被关闭
+        std::unique_ptr<DIR, decltype(del_dir)> dir_guard(dir, del_dir);
+
+        dirent *ent;
+        // 记录一下文件，应该文件先显示，目录再显示
+        while ((ent = readdir(dir)) != nullptr) {
+            if (ent->d_name == cur || ent->d_name == pre) {
+                // 跳过当前目录和上级目录
+                continue;
+            }
+            // 先输出空白
+            if (ent->d_type == DT_DIR) {
+                dirs.push(std::make_pair(curdirpath + ent->d_name, curpair.second + 4));
+            } else {
+                print_space(curpair.second);
+                print_info(curdirpath + ent->d_name);
+                std::cout << std::endl;
+            }
         }
     }
 }
@@ -125,12 +166,11 @@ void lsdir(const std::string &dirpath, int depth = 0) {
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         for (int i = 1; i < argc; ++i) {
-            lsdir(argv[i]);
+            lsdir_non_recursive(argv[i]);
         }
     } else {
-        lsdir(".");
+        lsdir_non_recursive(".");
     }
-
 
     return 0;
 }
