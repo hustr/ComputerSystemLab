@@ -138,7 +138,7 @@ void lsdir_non_recursive(const std::string &dirpath) {
         DIR *dir = opendir(curdirpath.c_str());
         if (dir == nullptr) {
             std::cerr << "error open dir, errno: " << errno << std::endl;
-            return;
+            continue;
         }
         // 确保dir最后一定会被关闭
         std::unique_ptr<DIR, decltype(del_dir)> dir_guard(dir, del_dir);
@@ -166,10 +166,10 @@ void lsdir_non_recursive(const std::string &dirpath) {
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         for (int i = 1; i < argc; ++i) {
-            lsdir_recursive(argv[i]);
+            lsdir_non_recursive(argv[i]);
         }
     } else {
-        lsdir_recursive(".");
+        lsdir_non_recursive(".");
     }
 
     return 0;
