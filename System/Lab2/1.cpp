@@ -19,6 +19,7 @@ union semun {
     unsigned short *array;    /* array for GETALL & SETALL */
 };
 
+// P操作定义
 void P(int semid, int index) {
     sembuf sem;
     sem.sem_num = index;
@@ -27,6 +28,7 @@ void P(int semid, int index) {
     semop(semid, &sem, 1);
 }
 
+// V操作定义
 void V(int semid, int index) {
     sembuf sem;
     sem.sem_num = index;
@@ -36,6 +38,7 @@ void V(int semid, int index) {
 }
 
 int main() {
+    // 获取信号量
     sem_id = semget(KEY, SEM_NUM, IPC_CREAT | 0666);
     if (sem_id < 0) {
         std::cerr << "Create sem failed, errno: " << errno << "\n";
@@ -88,7 +91,7 @@ int main() {
     pthread_join(pid_compute, nullptr);
     pthread_join(pid_print, nullptr);
     // 销毁信号量,第二个参数0在此处无意义
-    if (semctl(sem_id, 1024, IPC_RMID) < 0) {
+    if (semctl(sem_id, 0, IPC_RMID) < 0) {
         std::cerr << "destroy sem failed, errno: " << errno << "\n";
         exit(EXIT_FAILURE);
     }

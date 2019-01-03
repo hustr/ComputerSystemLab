@@ -77,13 +77,11 @@ void print_info(const std::string &path) {
     }
 }
 
-void lsdir_recursive(const std::string &dirpath, int depth = 0) {
+void lsdir(const std::string &dirpath, int depth = 0) {
     const static std::string cur = ".", pre = "..";
 
     DIR *dir = opendir(dirpath.c_str());
     auto del_dir = [&](DIR *dir) {
-        // std::cout << "close dir " << dirpath << ", errno: " << closedir(dir) << std::endl;
-        // std::cout << std::endl;
         closedir(dir);
     };
     if (dir == nullptr) {
@@ -103,73 +101,23 @@ void lsdir_recursive(const std::string &dirpath, int depth = 0) {
             // 跳过当前目录和上级目录
             continue;
         }
-        // 空白总是要先输出的
+        // 先输出缩进
         print_space(depth);
         print_info(filename + ent->d_name);
         std::cout << std::endl;
         if (ent->d_type == DT_DIR) {
-            lsdir_recursive(filename + ent->d_name, depth + 4);
+            lsdir(filename + ent->d_name, depth + 4);
         }
     }
 }
-
-
-void lsdir_non_recursive(const std::string &dirpath) {
-    const static std::string cur = ".", pre = "..";
-    std::stack<std::pair<std::string, int>> dirs;
-    dirs.push(std::make_pair(dirpath, 0));
-    auto del_dir = [&](DIR *dir) {
-        closedir(dir);
-    };
-    while (!dirs.empty()) {
-        auto curpair = std::move(dirs.top());
-        dirs.pop();
-        std::string &curdirpath = curpair.first;
-        if (curdirpath != ".") {
-            print_space(curpair.second - 4);
-            print_info(curdirpath);
-            std::cout << std::endl;
-        }
-
-        if (curdirpath.back() != '/') {
-            curdirpath.push_back('/');
-        }
-
-        DIR *dir = opendir(curdirpath.c_str());
-        if (dir == nullptr) {
-            std::cerr << "error open dir, errno: " << errno << std::endl;
-            return;
-        }
-        // 确保dir最后一定会被关闭
-        std::unique_ptr<DIR, decltype(del_dir)> dir_guard(dir, del_dir);
-
-        dirent *ent;
-        // 记录一下文件，应该文件先显示，目录再显示
-        while ((ent = readdir(dir)) != nullptr) {
-            if (ent->d_name == cur || ent->d_name == pre) {
-                // 跳过当前目录和上级目录
-                continue;
-            }
-            // 先输出空白
-            if (ent->d_type == DT_DIR) {
-                dirs.push(std::make_pair(curdirpath + ent->d_name, curpair.second + 4));
-            } else {
-                print_space(curpair.second);
-                print_info(curdirpath + ent->d_name);
-                std::cout << std::endl;
-            }
-        }
-    }
-}
-
 
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         for (int i = 1; i < argc; ++i) {
-            lsdir_recursive(argv[i]);
+            lsdir(argv[i]);
         }
     } else {
-        lsdir_recursive(".");
+        lsdir(".");
     }
 
     return 0;

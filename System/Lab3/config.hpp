@@ -11,14 +11,9 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <iostream>
-#include <memory>
-#include <utility>
 #include <cerrno>
 #include <cassert>
 #include <vector>
-#include <thread>
-#include <chrono>
-
 
 //  一个缓冲区10字节
 #define BUFSIZE 10
@@ -49,8 +44,8 @@ void V(int semid, int index = 0) {
 
 struct Block {
     // 文件块定义
-    bool end{}; // 标志文件结束
-    int size{}; // 二进制数据数目
+    bool end; // 标志文件结束
+    size_t size; // 数据字节数目
     char data[BUFSIZE];// 数据部分
 };
 // 信号量控制参数
@@ -84,7 +79,7 @@ public:
         }
     }
 
-    // emplace_back是个坑啊
+    // emplace_back可能会调用移动构造函数
     ShmBlk(ShmBlk &&other) noexcept {
         id = other.id;
         pid = other.pid;
@@ -122,7 +117,6 @@ public:
         }
     }
 
-    // 坑啊。。。
     ShmCtl(ShmCtl &&other) noexcept {
         addr = other.addr;
         other.addr = nullptr;

@@ -14,7 +14,10 @@
 #include <ctime>
 #include <stack>
 
-void print_space(int depth) {
+typedef std::string path_t;
+typedef int depth_t;
+
+void print_space(depth_t depth) {
     if (depth > 0) {
         std::cout << std::setw(depth) << std::right << ' ';
     }
@@ -77,46 +80,9 @@ void print_info(const std::string &path) {
     }
 }
 
-void lsdir_recursive(const std::string &dirpath, int depth = 0) {
+void lsdir(const std::string &dirpath) {
     const static std::string cur = ".", pre = "..";
-
-    DIR *dir = opendir(dirpath.c_str());
-    auto del_dir = [&](DIR *dir) {
-        // std::cout << "close dir " << dirpath << ", errno: " << closedir(dir) << std::endl;
-        // std::cout << std::endl;
-        closedir(dir);
-    };
-    if (dir == nullptr) {
-        std::cerr << "error open dir, errno: " << errno << std::endl;
-        return;
-    }
-    // 确保dir最后一定会被关闭
-    std::unique_ptr<DIR, decltype(del_dir)> dir_guard(dir, del_dir);
-
-    dirent *ent;
-    std::string filename = dirpath;
-    if (filename.back() != '/') {
-        filename.push_back('/');
-    }
-    while ((ent = readdir(dir)) != nullptr) {
-        if (ent->d_name == cur || ent->d_name == pre) {
-            // 跳过当前目录和上级目录
-            continue;
-        }
-        // 空白总是要先输出的
-        print_space(depth);
-        print_info(filename + ent->d_name);
-        std::cout << std::endl;
-        if (ent->d_type == DT_DIR) {
-            lsdir_recursive(filename + ent->d_name, depth + 4);
-        }
-    }
-}
-
-
-void lsdir_non_recursive(const std::string &dirpath) {
-    const static std::string cur = ".", pre = "..";
-    std::stack<std::pair<std::string, int>> dirs;
+    std::stack<std::pair<path_t, depth_t>> dirs;
     dirs.push(std::make_pair(dirpath, 0));
     auto del_dir = [&](DIR *dir) {
         closedir(dir);
@@ -150,7 +116,6 @@ void lsdir_non_recursive(const std::string &dirpath) {
                 // 跳过当前目录和上级目录
                 continue;
             }
-            // 先输出空白
             if (ent->d_type == DT_DIR) {
                 dirs.push(std::make_pair(curdirpath + ent->d_name, curpair.second + 4));
             } else {
@@ -166,10 +131,10 @@ void lsdir_non_recursive(const std::string &dirpath) {
 int main(int argc, char *argv[]) {
     if (argc > 1) {
         for (int i = 1; i < argc; ++i) {
-            lsdir_non_recursive(argv[i]);
+            lsdir(argv[i]);
         }
     } else {
-        lsdir_non_recursive(".");
+        lsdir(".");
     }
 
     return 0;

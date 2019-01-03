@@ -3,14 +3,12 @@
 #include <pthread.h> // thread: create, join
 #include <errno.h> // errno
 #include <chrono> // milliseconds
-#include <memory> // unique_ptr
-#include <utility> // make_unique
 #include <thread> // yield, sleep
 
-#define KEY 101
-#define SEM_NUM 1
-#define END 100
-#define WINS 10
+#define KEY 101 /* 信号量的key */
+#define SEM_NUM 1 /* 信号量数量 */
+#define END 100 /* 售卖票的数量 */
+#define WINS 10 /* 窗口数量 */
 
 // 记录已销售的
 volatile int selled = 0;
@@ -23,7 +21,7 @@ union semun {
     unsigned short *array;    /* array for GETALL & SETALL */
 };
 
-void P(int semid, int index) {
+void P(int semid, int index = 0) {
     sembuf sem;
     sem.sem_num = index;
     sem.sem_op = -1;
@@ -31,13 +29,14 @@ void P(int semid, int index) {
     semop(semid, &sem, 1);
 }
 
-void V(int semid, int index) {
+void V(int semid, int index = 0) {
     sembuf sem;
     sem.sem_num = index;
     sem.sem_op = 1;
     sem.sem_flg = 0;
     semop(semid, &sem, 1);
 }
+
 
 int main() {
     sem_id = semget(KEY, SEM_NUM, IPC_CREAT | 0666);
@@ -56,40 +55,36 @@ int main() {
     // 销售窗口pid
     pthread_t pid_sell[WINS];
     // 创建售票线程
+    int ids[WINS];
     for (int i = 0; i < WINS; ++i) {
         // 编号
-        std::unique_ptr<int> num = std::make_unique<int>(i);
+        ids[i] = i;
         // 创建线程
         pthread_create(pid_sell + i, nullptr, [](void *num) -> void * {
-            int sum = 0;
-            // 移动构造pid
-            auto pid = std::move(*static_cast<std::unique_ptr<int> *>(num));
+            int sum = 0; // 此线程售票数
             while (true) {
-                P(sem_id, 0);
+                P(sem_id);
                 // 已销售0，此线程应该销售1
                 if (selled < END) {
                     ++sum;
                     ++selled;
-                    std::cout << *pid << " sells " << selled << "\n";
-                    V(sem_id, 0);
+                    std::cout << *static_cast<int*>(num) << " sells " << selled << "\n";
+                    V(sem_id);
                     std::this_thread::sleep_for(std::chrono::milliseconds(random() % 100));
                 } else {
-                    // 输出所有票数
-                    std::cout << "thread " << *pid << " selled " << sum << " ticket(s) in total.\n";
-                    V(sem_id, 0);
+                    // 输出本窗口所有票数
+                    std::cout << "thread " << *static_cast<int*>(num) 
+                    << " selled " << sum << " ticket(s) in total.\n";
+                    V(sem_id);
                     break;
                 }
             }
             // 线程结束
             return nullptr;
-        }, &num);
+        }, ids + i);
         if (pid_sell[i] < 0) {
             std::cerr << "create thread failed, errno: " << errno << "\n";
             exit(EXIT_FAILURE);
-        }
-        //  等待线程将num指向的内存取走
-        while (num) {
-            std::this_thread::yield();
         }
     }
 
