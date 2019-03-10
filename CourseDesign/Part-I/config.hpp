@@ -11,6 +11,8 @@
 #include <sys/sem.h>
 #include <sys/shm.h>
 #include <sys/ipc.h>
+#include <fcntl.h>
+#include <sys/stat.h>
 
 // semphore
 #define A_EMPTY 100
@@ -20,7 +22,12 @@
 
 #define SHM_A 104
 #define SHM_B 105
+#define BUF_SIZE 20
 
+struct Block {
+    bool end;
+    char data[BUF_SIZE];
+};
 
 union semun {
     int val;

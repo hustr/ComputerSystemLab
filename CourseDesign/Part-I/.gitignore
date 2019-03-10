@@ -2,4 +2,4 @@ build/*
 read/read
 print/print
 copy/copy
-
+build-*/*
