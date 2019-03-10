@@ -3,8 +3,10 @@
 
 #include <QWidget>
 #include <QProcess>
+#include <QFileDialog>
 #include <iostream>
-
+#include <QDebug>
+#include "config.hpp"
 
 namespace Ui {
 class Widget;
@@ -20,9 +22,10 @@ public:
 
 private slots:
     void on_start_btn_clicked();
-    void read_output_ready();
-    void copy_output_ready();
-    void print_output_ready();
+
+    void on_src_btn_clicked();
+
+    void on_dst_btn_clicked();
 
 private:
     Ui::Widget *ui;
@@ -33,9 +36,6 @@ private:
     // semaphore
     int a_empty, a_valid, b_empty, b_valid;
     int shm_a, shm_b;
-
-//public: slots:
-
 };
 
 #endif // WIDGET_H

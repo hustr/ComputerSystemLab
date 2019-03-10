@@ -21,8 +21,12 @@ int main(int argc, char *argv[]) {
     }
     // try to open file
     int src_fd = open(argv[1], O_RDONLY);
+    if (src_fd < 0) {
+        std::cout << "open file error: " << strerror(errno) << std::endl;
+        exit(EXIT_FAILURE);
+    }
     int dst_fd = open(argv[2], O_WRONLY | O_CREAT | O_TRUNC, get_mode(argv[1]));
-    if (src_fd <0 || dst_fd <0 ) {
+    if (dst_fd < 0) {
         std::cerr << "open file error: " << strerror(errno) << std::endl;
         exit(EXIT_FAILURE);
     }

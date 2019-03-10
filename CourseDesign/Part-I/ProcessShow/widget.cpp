@@ -1,6 +1,5 @@
 #include "widget.h"
 #include "ui_widget.h"
-#include "../config.hpp"
 
 Widget::Widget(QWidget *parent) :
     QWidget(parent),
@@ -10,9 +9,16 @@ Widget::Widget(QWidget *parent) :
     read_process = new QProcess(this);
     copy_process = new QProcess(this);
     print_process = new QProcess(this);
-    connect(read_process, &QProcess::readyReadStandardOutput, this, &Widget::read_output_ready);
-    connect(copy_process, &QProcess::readyReadStandardOutput, this, &Widget::copy_output_ready);
-    connect(print_process, &QProcess::readyReadStandardOutput, this, &Widget::print_output_ready);
+    read_process->setStandardOutputFile("read_out.txt");
+    copy_process->setStandardOutputFile("copy_out.txt");
+    print_process->setStandardOutputFile("print_out.txt");
+    // accquire some shared memory if memory is not ready
+    a_empty = semget(A_EMPTY, 1, IPC_CREAT | 0666);
+    a_valid = semget(A_VALID, 1, IPC_CREAT | 0666);
+    b_empty = semget(B_EMPTY, 1, IPC_CREAT | 0666);
+    b_valid = semget(B_VALID, 1, IPC_CREAT | 0666);
+    shm_a = shmget(SHM_A, sizeof(Block), IPC_CREAT | 0666);
+    shm_b = shmget(SHM_B, sizeof(Block), IPC_CREAT | 0666);
 }
 
 Widget::~Widget()
@@ -38,16 +44,9 @@ Widget::~Widget()
     shmctl(shm_b, IPC_RMID, nullptr);
 }
 
-
-
 void Widget::on_start_btn_clicked()
 {
-    // accquire some shared memory if memory is not ready
-    a_empty = semget(A_EMPTY, 1, IPC_CREAT | 0666);
-    a_valid = semget(A_VALID, 1, IPC_CREAT | 0666);
-    b_empty = semget(B_EMPTY, 1, IPC_CREAT | 0666);
-    b_valid = semget(B_VALID, 1, IPC_CREAT | 0666);
-    // set default value
+    // set default valuee
     semun arg;
     arg.val = 0;
     semctl(a_valid, 0, SETVAL, arg);
@@ -56,43 +55,33 @@ void Widget::on_start_btn_clicked()
     semctl(a_empty, 0, SETVAL, arg);
     semctl(b_empty, 0, SETVAL, arg);
 
-
-    shm_a = shmget(SHM_A, sizeof(int), IPC_CREAT | 0666);
-    shm_b = shmget(SHM_B, sizeof(int), IPC_CREAT | 0666);
-
-    // clear output
-    QString file = ui->filename_edit->text();
     QStringList params;
-    params << file;
-    ui->read_brw->clear();
-    ui->copy_brw->clear();
-    ui->print_brw->clear();
+    params << ui->src_edit->text() << ui->dst_edit->text();
+    qDebug() << ui->src_edit->text() << "\n";
     QProcess *ps[3] = {read_process, copy_process, print_process};
-    const char *programs[3] = {"../read/read", "../copy/copy", "../print/print"};
+    const char *programs[3] = {"Read", "Copy", "Write"};
     for (int i = 0; i < 3; ++i) {
         // start process
         if (ps[i]->state() == QProcess::Running) {
             ps[i]->kill();
             ps[i]->waitForFinished();
         }
-        ps[i]->start(programs[i]);
+        ps[i]->start(programs[i], params);
     }
 }
 
-// process output of read process
-void Widget::read_output_ready()
+void Widget::on_src_btn_clicked()
 {
-    ui->read_brw->insertPlainText(read_process->readAllStandardOutput());
+    QString file = QFileDialog::getOpenFileName(this, "Select source file", "/home", "*");
+    if (!file.isEmpty()) {
+        ui->src_edit->setText(file);
+    }
 }
 
-// process output of copy process
-void Widget::copy_output_ready()
+void Widget::on_dst_btn_clicked()
 {
-    ui->copy_brw->insertPlainText(copy_process->readAllStandardOutput());
-}
-
-// process output of print process
-void Widget::print_output_ready()
-{
-    ui->print_brw->insertPlainText(print_process->readAllStandardOutput());
+    QString file = QFileDialog::getSaveFileName(this, "Select save file", "/home", "*");
+    if (!file.isEmpty()) {
+        ui->dst_edit->setText(file);
+    }
 }

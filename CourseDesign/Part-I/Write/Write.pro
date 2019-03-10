@@ -1,6 +1,6 @@
 #-------------------------------------------------
 #
-# Project created by QtCreator 2019-03-03T13:55:20
+# Project created by QtCreator 2019-03-04T16:38:34
 #
 #-------------------------------------------------
 
@@ -8,7 +8,7 @@ QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
-TARGET = ProcessShow
+TARGET = Write
 TEMPLATE = app
 
 # The following define makes your compiler emit warnings if you use
@@ -26,15 +26,15 @@ CONFIG += c++11
 
 SOURCES += \
         main.cpp \
-        widget.cpp \
+        write.cpp \
     config.cpp
 
 HEADERS += \
-        widget.h \
+        write.h \
     config.hpp
 
 FORMS += \
-        widget.ui
+        write.ui
 
 # Default rules for deployment.
 qnx: target.path = /tmp/$${TARGET}/bin
