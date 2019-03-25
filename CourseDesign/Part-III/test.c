@@ -49,7 +49,7 @@ static ssize_t test_read(struct file* filp, char __user* buf, size_t sz, loff_t*
 	if (sz == 0) {
 		return 0;
 	}
-    printk("cur = %d, unuse = %d, sz = %d\n", cur, unuse, sz);
+    // printk("cur = %lu, unuse = %lu, sz = %lu\n", cur, unuse, sz);
 	if (cur + sz < MAX_SIZE) {
 		//  正常情况
 		if(copy_to_user(buf, mydev->mem + cur, sz)) {
@@ -61,15 +61,15 @@ static ssize_t test_read(struct file* filp, char __user* buf, size_t sz, loff_t*
 		if (copy_to_user(buf, mydev->mem + cur, MAX_SIZE - cur)) {
 			return -1;
 		}
-        printk("MAX_SIZE - cur = %d\n", MAX_SIZE - cur);
+        // printk("MAX_SIZE - cur = %d\n", MAX_SIZE - cur);
 		if (copy_to_user(buf + MAX_SIZE - cur, mydev->mem, sz - (MAX_SIZE - cur))) {
 			return -1;
 		}
-        printk("sz - (MAX_SIZE - cur) = %d\n", sz - (MAX_SIZE - cur));
+        // printk("sz - (MAX_SIZE - cur) = %d\n", sz - (MAX_SIZE - cur));
 		cur = (cur + sz) % MAX_SIZE;
 	}
 
-    printk("cur = %d, unuse = %d, sz = %d\n", cur, unuse, sz);
+    // printk("cur = %d, unuse = %d, sz = %lu\n", cur, unuse, sz);
 
 	return sz;
 }
@@ -86,7 +86,7 @@ static ssize_t test_write(struct file*filp, const char __user *buf, size_t sz, l
 		return 0;
 	}
 	//  判断写是否会跨尾部
-    printk("cur = %d, unuse = %d, sz = %d\n", cur, unuse, sz);
+    // printk("cur = %d, unuse = %d, sz = %d\n", cur, unuse, sz);
 	if (sz + unuse >= MAX_SIZE) {
 		// 先写一部分，再写剩下的
 		if (copy_from_user(mydev->mem + unuse, buf, MAX_SIZE - unuse)) {
@@ -103,7 +103,7 @@ static ssize_t test_write(struct file*filp, const char __user *buf, size_t sz, l
 		}
 		unuse += sz;
 	}
-    printk("cur = %d, unuse = %d, sz = %d\n", cur, unuse, sz);
+    // printk("cur = %d, unuse = %d, sz = %d\n", cur, unuse, sz);
 	return sz;
 }
 
