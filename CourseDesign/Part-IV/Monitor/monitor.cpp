@@ -73,9 +73,9 @@ Monitor::Monitor(QWidget *parent) :
     connect(ui->actionFind_Process, &QAction::triggered, this, &Monitor::find_process);
     connect(ui->actionShutdown, &QAction::triggered, this, &Monitor::shutdown);
     connect(ui->actionNew_Process, &QAction::triggered, this, &Monitor::new_process);
-    new_p = new NewProcess();
+    new_p.reset(new NewProcess());
     new_p->hide();
-    find_p = new FindProcess();
+    find_p.reset(new FindProcess());
     find_p->hide();
 }
 
@@ -83,8 +83,6 @@ Monitor::~Monitor()
 {
     new_p->close();
     find_p->close();
-    delete new_p;
-    delete find_p;
     delete ui;
 }
 
