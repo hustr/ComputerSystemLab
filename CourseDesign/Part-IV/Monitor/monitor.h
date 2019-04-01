@@ -54,8 +54,8 @@ private:
     QStandardItemModel *model;
 //    int last_select;
 //    std::unique_ptr<QTimer> up_timer;
-    NewProcess *new_p;
-    FindProcess *find_p;
+    std::unique_ptr<NewProcess> new_p;
+    std::unique_ptr<FindProcess> find_p;
 
     Ui::Monitor *ui;
 };
