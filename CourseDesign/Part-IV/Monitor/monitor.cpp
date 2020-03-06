@@ -137,7 +137,7 @@ QChartView *Monitor::create_cpu_view(QSplineSeries *cpu)
 
     QChartView *view = new QChartView(chart);
     // antialiasing
-    view->setRenderHint(QPainter::HighQualityAntialiasing);
+    view->setRenderHint(QPainter::Antialiasing);
 
     return view;
 }
@@ -176,7 +176,7 @@ QChartView *Monitor::create_mem_view(QSplineSeries *mem, QSplineSeries *swap)
 
     QChartView *view = new QChartView(chart);
     // antialiasing
-    view->setRenderHint(QPainter::HighQualityAntialiasing);
+    view->setRenderHint(QPainter::Antialiasing);
 
     return view;
 }
